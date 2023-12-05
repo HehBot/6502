@@ -84,6 +84,11 @@ void setup()
     writeBuf(0x00, program, sizeof(program));
     Serial.println("New contents:");
     printContents(0x00, 0x0f);
+
+    Serial.println("Writing reset vector:");
+    byte reset_vector[] = { 0x00, 0x80 };
+    writeBuf(0x7ffc, reset_vector, 2);
+    printContents(0x7ff, 0x7ff);
 }
 
 void loop()
