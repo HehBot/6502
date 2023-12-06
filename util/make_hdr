@@ -1,0 +1,24 @@
+#!/usr/bin/python
+from sys import argv
+
+if len(argv) != 2 and len(argv) != 3:
+    print(f"Usage: {argv[0]} <Input file> (<block size>)")
+    exit(0)
+
+l = 16
+if len(argv) == 3:
+    l = int(argv[2])
+
+f = list(open(argv[1], 'rb').read())
+w = len(f) - len(f) % l
+
+print('byte const program[] = {')
+for i in range(0, w, l):
+    print("    ", end='')
+    for j in range(l):
+        print("0x%02x, " % f[i + j], end = '')
+    print()
+print("    ", end="")
+for i in f[w:-1]:
+    print("0x%02x, " % i, end = '')
+print("0x%02x\n};" % f[-1])

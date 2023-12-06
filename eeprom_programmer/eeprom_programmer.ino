@@ -55,7 +55,7 @@ void writeEEPROM(int address, byte data)
     digitalWrite(WRITE_EN, LOW);
     delayMicroseconds(1);
     digitalWrite(WRITE_EN, HIGH);
-    delay(10);
+    delay(12);
 }
 void writeBuf(int address, byte array[], int sz)
 {
@@ -66,6 +66,12 @@ void writeBuf(int address, byte array[], int sz)
     for (int i = 0; i < sz; ++i)
         writeEEPROM(address + i, array[i]);
 }
+
+#include "program.h"
+int const addr = 0x0;
+int const sz = sizeof(program);
+int const start_line = addr >> 4;
+int const end_line = (addr + sz - 1) >> 4;
 
 void setup()
 {
@@ -79,11 +85,11 @@ void setup()
     Serial.begin(57600);
 
     Serial.println("Original contents:");
-    printContents(0x00, 0x0f);
-#include "program.h"
-    writeBuf(0x00, program, sizeof(program));
+    printContents(start_line, end_line);
+    
+    writeBuf(addr, program, sz);
     Serial.println("New contents:");
-    printContents(0x00, 0x0f);
+    printContents(start_line, end_line);
 
     Serial.println("Writing reset vector:");
     byte reset_vector[] = { 0x00, 0x80 };

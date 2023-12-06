@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+
+if ! [[ $# -eq 1 ]]; then
+    echo "Usage: $0 <device_env_var_name>"
+    exit 0;
+fi
+
+DEV=$(eval echo \$$(echo ${1}))
+
+if [ -z ${DEV} ]; then
+    echo "Env var ${1} not set"
+    exit 1
+elif ! [ -c ${DEV} ]; then
+    echo "Device ${DEV} does not exist"
+    exit 2
+elif ! [ -w ${DEV} ]; then
+    echo "Device ${DEV} not writeable"
+    exit 3;
+fi
