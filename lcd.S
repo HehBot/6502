@@ -3,16 +3,26 @@ PORTA = $6001
 DDRB  = $6002
 DDRA  = $6003
 
-E   = %10000000
-RWB = %01000000
-RS  = %00100000
-
     .org $8000
 
 reset:
     ldx #$ff         ; Set stack register
     txs
 
+    jsr lcd_init
+    jsr puts
+
+loop:
+    jmp loop
+
+message: .asciiz "   Learn more                            eater.net/6502"
+
+; initialise lcd (D0-D7 connected to PORTB and E,RS,RWB to 3 msb of PORTA)
+E   = %10000000
+RWB = %01000000
+RS  = %00100000
+lcd_init:
+    pha
     lda #%11111111   ; Set all pins on port B to output
     sta DDRB
     lda #%11100000   ; Set top 3 pins on port A to output
@@ -26,55 +36,6 @@ reset:
     jsr lcd_instruction
     lda #%00000001   ; Clear display
     jsr lcd_instruction
-
-    lda #"H"
-    jsr print_char
-    lda #"e"
-    jsr print_char
-    lda #"l"
-    jsr print_char
-    lda #"l"
-    jsr print_char
-    lda #"o"
-    jsr print_char
-    lda #","
-    jsr print_char
-    lda #" "
-    jsr print_char
-    lda #"W"
-    jsr print_char
-    lda #"o"
-    jsr print_char
-    lda #"r"
-    jsr print_char
-    lda #"l"
-    jsr print_char
-    lda #"d"
-    jsr print_char
-    lda #"!"
-    jsr print_char
-
-loop:
-    jmp loop
-
-
-lcd_wait:
-    pha
-    lda #%00000000   ; Set port B to input
-    sta DDRB
-lcd_busy_loop:
-    lda #RWB
-    sta PORTA
-    lda #(RWB | E)
-    sta PORTA
-    lda PORTB
-    and #%10000000
-    bne lcd_busy_loop
-
-    lda #RWB
-    sta PORTA
-    lda #%11111111   ; Set port B to output
-    sta DDRB
     pla
     rts
 
@@ -89,7 +50,29 @@ lcd_instruction:
     sta PORTA
     rts
 
-print_char:
+lcd_wait:
+    pha
+    lda #%00000000   ; Set port B to input
+    sta DDRB
+.busy:
+    lda #RWB
+    sta PORTA
+    lda #(RWB | E)
+    sta PORTA
+    lda PORTB
+    and #%10000000
+    bne .busy
+
+    lda #RWB
+    sta PORTA
+    lda #%11111111   ; Set port B to output
+    sta DDRB
+    pla
+    rts
+
+; put character in A register to lcd
+putc:
+    pha
     jsr lcd_wait
     sta PORTB
     lda #RS          ; Set RS, Clear RWB/E bits
@@ -98,4 +81,19 @@ print_char:
     sta PORTA
     lda #RS          ; Clear RWB/E bits
     sta PORTA
+    pla
+    rts
+
+; put null-terminated string at `message` to lcd
+puts:
+    pha
+    ldx #0
+.loop:
+    lda message, x
+    beq .end
+    jsr putc
+    inx
+    jmp .loop
+.end:
+    pla
     rts
