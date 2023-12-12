@@ -2,27 +2,45 @@ PORTB = $6000
 PORTA = $6001
 DDRB  = $6002
 DDRA  = $6003
+PCR   = $600c
+IFR   = $600d
+IER   = $600e
 
 value = $0200   ; 2 bytes
 mod10 = $0202   ; 2 bytes
 message = $0204 ; 6 bytes
+counter = $020a ; 2 bytes
 
     .org $8000
-
 start:
     ldx #$ff         ; Set stack register
     txs
+    cli
+
+    lda #$82
+    sta IER
+    lda #$00
+    sta PCR
 
     jsr lcd_init
+    lda #0
+    sta counter
+    sta counter + 1
+
+loop:
+    lda #%00000010   ; Home cursor
+    jsr lcd_instruction
 
     lda #0
     sta message
 
-    ; initialise value to number
-    lda number
+    ; initialise value to counter
+    sei
+    lda counter
     sta value
-    lda number + 1
+    lda counter + 1
     sta value + 1
+    cli
 
 .divide:
     ; initialise remainder to zero
@@ -67,10 +85,9 @@ start:
 
     jsr puts
 
-loop:
     jmp loop
 
-number: .word 1729
+;;
 
 ; add the character in the A register to the beginning of the null-terminated string `message`
 push_char:
@@ -170,3 +187,17 @@ puts:
 .end:
     pla
     rts
+
+nmi:
+irq:
+    inc counter
+    bne .end
+    inc counter + 1
+.end:
+    bit PORTA
+    rti
+
+    .org $fffa
+    .word nmi
+    .word start
+    .word irq

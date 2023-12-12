@@ -27,12 +27,9 @@ program: %: $(BUILD_DIR)/%.h
 	@$(VERIFY_DEV) EEPROM_DEV
 	$(ARDU) upload -b $(EEPROM_FQBN) -p $(EEPROM_DEV) $(EEPROM)
 
-$(BUILD_DIR)/%.h: $(BUILD_DIR)/%.bin
-	@$(MAKE_HDR) $< > $@
-
-$(BUILD_DIR)/%.bin: %.S
+$(BUILD_DIR)/%.h: %.S
 	@mkdir -p $(dir $@)
-	$(ASM) $(ASMFLAGS) -o $@ $<
+	$(MAKE_HDR) $@ $(ASM) $(ASMFLAGS) $<
 
 .PHONY: clean monitor program
 
