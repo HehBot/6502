@@ -1,16 +1,16 @@
 PORTB = $6000
 PORTA = $6001
-DDRB = $6002
-DDRA = $6003
+DDRB  = $6002
+DDRA  = $6003
 
-E  = %10000000
-RW = %01000000
-RS = %00100000
+E   = %10000000
+RWB = %01000000
+RS  = %00100000
 
     .org $8000
 
 reset:
-    ldx #$ff
+    ldx #$ff         ; Set stack register
     txs
 
     lda #%11111111   ; Set all pins on port B to output
@@ -54,26 +54,48 @@ reset:
     lda #"!"
     jsr print_char
 
-
 loop:
     jmp loop
 
+
+lcd_wait:
+    pha
+    lda #%00000000   ; Set port B to input
+    sta DDRB
+lcd_busy_loop:
+    lda #RWB
+    sta PORTA
+    lda #(RWB | E)
+    sta PORTA
+    lda PORTB
+    and #%10000000
+    bne lcd_busy_loop
+
+    lda #RWB
+    sta PORTA
+    lda #%11111111   ; Set port B to output
+    sta DDRB
+    pla
+    rts
+
 lcd_instruction:
+    jsr lcd_wait
     sta PORTB
-    lda #0           ; Clear RS/RW/E bits
+    lda #0           ; Clear RS/RWB/E bits
     sta PORTA
     lda #E           ; Set E bit to send instruction
     sta PORTA
-    lda #0           ; Clear RS/RW/E bits
+    lda #0           ; Clear RS/RWB/E bits
     sta PORTA
     rts
 
 print_char:
+    jsr lcd_wait
     sta PORTB
-    lda #RS          ; Set RS, Clear RW/E bits
+    lda #RS          ; Set RS, Clear RWB/E bits
     sta PORTA
     lda #(RS | E)    ; Set E bit to send instruction
     sta PORTA
-    lda #RS          ; Clear RW/E bits
+    lda #RS          ; Clear RWB/E bits
     sta PORTA
     rts
