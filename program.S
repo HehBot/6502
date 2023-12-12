@@ -3,19 +3,92 @@ PORTA = $6001
 DDRB  = $6002
 DDRA  = $6003
 
+value = $0200   ; 2 bytes
+mod10 = $0202   ; 2 bytes
+message = $0204 ; 6 bytes
+
     .org $8000
 
-reset:
+start:
     ldx #$ff         ; Set stack register
     txs
 
     jsr lcd_init
+
+    lda #0
+    sta message
+
+    ; initialise value to number
+    lda number
+    sta value
+    lda number + 1
+    sta value + 1
+
+.divide:
+    ; initialise remainder to zero
+    lda #0
+    sta mod10
+    sta mod10 + 1
+    clc
+
+    ldx #16
+.divloop:
+    ; rotate quotient and remainder
+    rol value
+    rol value + 1
+    rol mod10
+    rol mod10 + 1
+
+    sec
+    lda mod10
+    sbc #10
+    tay
+    lda mod10 + 1
+    sbc #0
+    bcc .ignore_result
+    sty mod10
+    sta mod10 + 1
+
+.ignore_result:
+    dex
+    bne .divloop
+    rol value
+    rol value + 1
+
+    lda mod10
+    clc
+    adc #"0"
+    jsr push_char
+
+    ; if value != 0, then continue dividing
+    lda value
+    ora value + 1
+    bne .divide
+
     jsr puts
 
 loop:
     jmp loop
 
-message: .asciiz "   Learn more                            eater.net/6502"
+number: .word 1729
+
+; add the character in the A register to the beginning of the null-terminated string `message`
+push_char:
+    pha
+    ldy #0
+.loop:
+    lda message,y
+    tax
+    pla
+    sta message, y
+    iny
+    txa
+    pha
+    bne .loop
+
+    pla
+    sta message, y
+    rts
 
 ; initialise lcd (D0-D7 connected to PORTB and E,RS,RWB to 3 msb of PORTA)
 E   = %10000000

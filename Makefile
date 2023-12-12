@@ -20,7 +20,7 @@ monitor:
 	$(ARDU) compile -b $(MONITOR_FQBN) $(MONITOR)
 	$(ARDU) upload -b $(MONITOR_FQBN) -p $(MONITOR_DEV) $(MONITOR)
 
-lcd: %: $(BUILD_DIR)/%.h
+program: %: $(BUILD_DIR)/%.h
 	@$(RM) -rf $(EEPROM)/program.h
 	@cd $(EEPROM) && ln -s ../$< program.h
 	$(ARDU) compile -b $(EEPROM_FQBN) $(EEPROM)
@@ -34,7 +34,7 @@ $(BUILD_DIR)/%.bin: %.S
 	@mkdir -p $(dir $@)
 	$(ASM) $(ASMFLAGS) -o $@ $<
 
-.PHONY: clean monitor lcd
+.PHONY: clean monitor program
 
 clean:
 	@$(RM) -rf $(BUILD_DIR)
