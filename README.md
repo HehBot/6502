@@ -22,3 +22,6 @@ sudo chown $(whoami) ${MONITOR_DEV}
 make monitor    # uploads monitor sketch to Arduino Mega, only needs to be done once
 minicom -D ${MONITOR_DEV} -b 57600  # Serial monitor
 ```
+
+## Links
+ - Dr. Volker Barthelmann's assembler [`vasm`](http://www.compilers.de/vasm.html)
